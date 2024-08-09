@@ -38,6 +38,7 @@ class Knowledge:
         """Load the pipeline."""
         with open("database/pipeline.pkl", "rb") as f:
             self.pipeline = pickle.load(f)
+        print("Pipeline loaded successfully")
         return self
 
     def search(
@@ -122,6 +123,7 @@ def search(k_tags: int, tags: str, sort: bool, q: str):
     """Search for documents."""
     tags = tags != "null"
     documents = knowledge.search(q=q, tags=tags)
+    print(f"Search query: {q}, Tags: {tags}, Documents found: {len(documents)}")
     if bool(sort):
         documents = [
             document
@@ -139,7 +141,9 @@ def search(k_tags: int, tags: str, sort: bool, q: str):
 @app.get("/plot/{k_tags}/{q}", response_class=ORJSONResponse)
 def plot(k_tags: int, q: str):
     """Plot tags."""
-    return knowledge.plot(q=q, k_tags=k_tags)
+    result = knowledge.plot(q=q, k_tags=k_tags)
+    print(f"Plot query: {q}, Result: {result}")
+    return result
 
 
 @app.on_event("startup")
@@ -161,4 +165,5 @@ async def chat(k_tags: int, q: str):
         )
         content += "url: " + document["url"] + "\n\n"
     content = "title: ".join(content[:3000].split("title:")[:-1])
+    print(f"Chat query: {q}, Content length: {len(content)}")
     return StreamingResponse(async_chat(query=q, content=content), media_type="text/plain")
