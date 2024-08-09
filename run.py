@@ -48,9 +48,12 @@ if os.path.exists("database/database.json"):
 #     print("No Twitter token.")
 
 # Github
+print("GitHub users from sources.yml:", sources.get("github"))
+
 if sources.get("github") is not None:
     print("Github knowledge.")
     for user in sources["github"]:
+        print(f"Scraping GitHub stars for user: {user}")  # Debugging print statement
         knowledge = github.Github(user=user)
         knowledge = {
             url: document for url, document in knowledge().items() if url not in data
