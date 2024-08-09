@@ -75,7 +75,7 @@
         const response = document.getElementById("chat");
 
         if (query.length > 3){
-            fetch('https://knowledge.fly.dev/chat/20/' + query.replace("/", ""))
+            fetch('https://knowledge-blue-glade-1168.fly.dev/chat/20/' + query.replace("/", ""))
             .then(response => {
                 // Stream response.
                 const reader = response.body.getReader();
@@ -179,7 +179,7 @@
             chat.hidden = true;
         }
 
-        fetch("https://knowledge.fly.dev/search/" + sort.toString() + "/"  + this.state.node + "/" + k.toString() + "/" + query.replace("/", "")).then(res => res.json()).then(data => {
+        fetch("https://knowledge-blue-glade-1168.fly.dev/search/" + sort.toString() + "/"  + this.state.node + "/" + k.toString() + "/" + query.replace("/", "")).then(res => res.json()).then(data => {
                 ReactDOM.render(
                     <div>
                     {Object.entries(data["documents"]).map((document, _) =>
@@ -204,7 +204,7 @@
 
 
       plot(query, k) {
-          fetch("https://knowledge.fly.dev/plot/" + k.toString() + "/" + query.replace("/", "")).then(res => res.json()).then(data => {
+          fetch("https://knowledge-blue-glade-1168.fly.dev/plot/" + k.toString() + "/" + query.replace("/", "")).then(res => res.json()).then(data => {
               ReactDOM.render(
                   <ForceGraph3D
                       graphData={data}

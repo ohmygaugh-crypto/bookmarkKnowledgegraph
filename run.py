@@ -6,22 +6,22 @@ import yaml
 
 from knowledge_database import (
     github,
-    hackernews,
+    # hackernews,
     pipeline,
     semanlink,
     tags,
-    twitter,
-    zotero,
+    # twitter,
+    # zotero,
 )
 
 with open("sources.yml", "r") as f:
     sources = yaml.load(f, Loader=yaml.FullLoader)
 
-twitter_token = os.environ.get("TWITTER_TOKEN")
-hackernews_username = os.environ.get("HACKERNEWS_USERNAME")
-hackernews_password = os.environ.get("HACKERNEWS_PASSWORD")
-zotero_library_id = os.environ.get("ZOTERO_LIBRARY_ID")
-zotero_api_key = os.environ.get("ZOTERO_API_KEY")
+# twitter_token = os.environ.get("TWITTER_TOKEN")
+# hackernews_username = os.environ.get("HACKERNEWS_USERNAME")
+# hackernews_password = os.environ.get("HACKERNEWS_PASSWORD")
+# zotero_library_id = os.environ.get("ZOTERO_LIBRARY_ID")
+# zotero_api_key = os.environ.get("ZOTERO_API_KEY")
 
 data = {}
 
@@ -30,22 +30,22 @@ if os.path.exists("database/database.json"):
         data = json.load(f)
 
 # Twitter
-if twitter_token is not None and sources.get("twitter") is not None:
-    print("Twitter knowledge.")
-    for user_id_username in sources["twitter"]:
-        user_id = user_id_username[0]
-        username = user_id_username[1]
+# if twitter_token is not None and sources.get("twitter") is not None:
+#     print("Twitter knowledge.")
+#     for user_id_username in sources["twitter"]:
+#         user_id = user_id_username[0]
+#         username = user_id_username[1]
 
-        knowledge = twitter.Twitter(
-            username=username, user_id=user_id, token=twitter_token
-        )
-        knowledge = {
-            url: document for url, document in knowledge().items() if url not in data
-        }
-        print(f"Found {len(knowledge)} new Twitter documents.")
-        data = {**data, **knowledge}
-else:
-    print("No Twitter token.")
+#         knowledge = twitter.Twitter(
+#             username=username, user_id=user_id, token=twitter_token
+#         )
+#         knowledge = {
+#             url: document for url, document in knowledge().items() if url not in data
+#         }
+#         print(f"Found {len(knowledge)} new Twitter documents.")
+#         data = {**data, **knowledge}
+# else:
+#     print("No Twitter token.")
 
 # Github
 if sources.get("github") is not None:
@@ -60,35 +60,35 @@ if sources.get("github") is not None:
 
 
 # Hackernews
-if hackernews_username is not None and hackernews_password is not None:
-    print("Hackernews knowledge.")
-    knowledge = hackernews.HackerNews(
-        username=hackernews_username,
-        password=hackernews_password,
-    )
-    knowledge = {
-        url: document for url, document in knowledge().items() if url not in data
-    }
-    print(f"Found {len(knowledge)} new Hackernews documents.")
-    data = {**data, **knowledge}
-else:
-    print("No Hackernews credentials.")
+# if hackernews_username is not None and hackernews_password is not None:
+#     print("Hackernews knowledge.")
+#     knowledge = hackernews.HackerNews(
+#         username=hackernews_username,
+#         password=hackernews_password,
+#     )
+#     knowledge = {
+#         url: document for url, document in knowledge().items() if url not in data
+#     }
+#     print(f"Found {len(knowledge)} new Hackernews documents.")
+#     data = {**data, **knowledge}
+# else:
+#     print("No Hackernews credentials.")
 
 # Zotero
-if zotero_library_id is not None and zotero_api_key is not None:
-    print("Zotero knowledge.")
-    knowledge = zotero.Zotero(
-        library_id=zotero_library_id,
-        library_type="group",
-        api_key=zotero_api_key,
-    )
-    knowledge = {
-        url: document for url, document in knowledge().items() if url not in data
-    }
-    print(f"Found {len(knowledge)} new Zotero documents.")
-    data = {**data, **knowledge}
-else:
-    print("No Zotero credentials.")
+# if zotero_library_id is not None and zotero_api_key is not None:
+#     print("Zotero knowledge.")
+#     knowledge = zotero.Zotero(
+#         library_id=zotero_library_id,
+#         library_type="group",
+#         api_key=zotero_api_key,
+#     )
+#     knowledge = {
+#         url: document for url, document in knowledge().items() if url not in data
+#     }
+#     print(f"Found {len(knowledge)} new Zotero documents.")
+#     data = {**data, **knowledge}
+# else:
+#     print("No Zotero credentials.")
 
 # Semanlink
 if sources["semanlink"]:
