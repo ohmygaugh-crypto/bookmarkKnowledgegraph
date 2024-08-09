@@ -15,7 +15,7 @@ app = FastAPI(
 )
 
 origins = [
-    "https://ohmygaugh-crypto.fly.dev",
+    "https://ohmygaugh-crypto.github.io",
 ]
 
 
