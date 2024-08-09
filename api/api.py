@@ -15,7 +15,7 @@ app = FastAPI(
 )
 
 origins = [
-    "https://raphaelsty.github.io",
+    "https://knowledge-blue-glade-1168.fly.dev",
 ]
 
 
@@ -112,6 +112,11 @@ async def async_chat(query: str, content: str):
             yield answer.strip()
 
 
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the API"}
+
+
 @app.get("/search/{sort}/{tags}/{k_tags}/{q}")
 def search(k_tags: int, tags: str, sort: bool, q: str):
     """Search for documents."""
@@ -151,7 +156,7 @@ async def chat(k_tags: int, q: str):
     for document in documents:
         content += "title: " + document["title"] + "\n"
         content += "summary: " + document["summary"][:30] + "\n"
-        content += "targs: " + (
+        content += "tags: " + (
             ", ".join(document["tags"] + document["extra-tags"]) + "\n"
         )
         content += "url: " + document["url"] + "\n\n"
