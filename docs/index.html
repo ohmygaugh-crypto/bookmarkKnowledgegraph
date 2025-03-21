@@ -1,3 +1,17 @@
+<head>
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
+    <!-- Load React first -->
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Load Three.js and dependencies with non-module scripts -->
+    <script src="https://unpkg.com/three@0.160.1/build/three.min.js"></script>
+    <script src="https://unpkg.com/three-spritetext@1.8.1/dist/three-spritetext.min.js"></script>
+    
+    <!-- Load ForceGraph after Three.js is loaded -->
+    <script src="https://unpkg.com/react-force-graph-3d@1.24.1/dist/react-force-graph-3d.min.js"></script>
+</head>
 <body>
     <div id="searchbox">
         <div id="backsearch"></div>
@@ -8,8 +22,10 @@
 
 </body>
 
-  <script type="text/jsx">
+<script type="text/babel">
     const { useRef } = React;
+    const { ForceGraph3D } = ForceGraph3D || {};
+    const { SpriteText } = THREE || {};
 
     class Search extends React.Component {
 
@@ -264,16 +280,9 @@
       }
   }
 
-  const root = ReactDOM.createRoot(document.getElementById('backsearch'));
-  root.render(<Search />);
+  // Use ReactDOM directly instead of createRoot for React 17
+  ReactDOM.render(<Search />, document.getElementById('backsearch'));
 
-  </script>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-  <script src="https://unpkg.com/react/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/babel-standalone"></script>
-<script src="https://unpkg.com/three@0.160.1"></script>
-  <script src="https://unpkg.com/three-spritetext"></script>
-  <script src="https://unpkg.com/react-force-graph-3d"></script>
-  <!--<script src="../../src/packages/react-force-graph-2d/dist/react-force-graph-2d.js"></script>-->
+</script>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">

@@ -15,7 +15,9 @@ app = FastAPI(
 )
 
 origins = [
-    "https://ohmygaugh-crypto.github.io",
+    "https://ohmygaugh-crypto.github.io/bookmarkKnowledgegraph",
+    "http://localhost:5500",  
+    "http://127.0.0.1:5500",   
 ]
 
 
@@ -36,9 +38,21 @@ class Knowledge:
 
     def start(self):
         """Load the pipeline."""
-        with open("database/pipeline.pkl", "rb") as f:
-            self.pipeline = pickle.load(f)
-        print("Pipeline loaded successfully")
+        try:
+            with open("database/pipeline.pkl", "rb") as f:
+                pipeline_data = pickle.load(f)
+            
+            from knowledge_database.pipeline import Pipeline
+            
+            # Reconstruct the pipeline from saved data
+            self.pipeline = Pipeline(
+                documents=pipeline_data.get('documents', []),
+                triples=pipeline_data.get('triples', []),
+                excluded_tags=pipeline_data.get('excluded_tags', {})
+            )
+            print("Pipeline loaded successfully")
+        except Exception as e:
+            print(f"Error loading pipeline: {e}")
         return self
 
     def search(

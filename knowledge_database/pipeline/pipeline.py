@@ -1,5 +1,7 @@
 from ..graph import Graph
 from ..retriever import Retriever
+from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer
+import pickle
 
 __all__ = ["Pipeline"]
 
@@ -32,6 +34,20 @@ class Pipeline:
         self.retriever = Retriever(documents=documents)
         self.graph = Graph(triples=triples)
         self.excluded_tags = {} if excluded_tags is None else excluded_tags
+        
+        # Initialize TF-IDF components but don't save them
+        # The vectorizer and transformer will be used internally by the retriever
+        # but we won't pickle them to avoid binary compatibility issues
+        self.vectorizer = TfidfVectorizer()
+        self.transformer = TfidfTransformer()
+        
+        # Save only the necessary data for the pipeline
+        with open('database/pipeline.pkl', 'wb') as f:
+            pickle.dump({
+                'documents': documents,
+                'triples': triples,
+                'excluded_tags': self.excluded_tags
+            }, f)
 
     def search(self, q: str, tags: bool = False):
         """Search for documents.
