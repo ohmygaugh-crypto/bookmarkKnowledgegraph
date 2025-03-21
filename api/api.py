@@ -14,19 +14,13 @@ app = FastAPI(
     version="0.0.1",
 )
 
-origins = [
-    "https://ohmygaugh-crypto.github.io/bookmarkKnowledgegraph",
-    "http://localhost:5500",  
-    "http://127.0.0.1:5500",   
-]
-
-
+# Add CORS middleware to allow requests from any origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Allows all origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
 )
 
 

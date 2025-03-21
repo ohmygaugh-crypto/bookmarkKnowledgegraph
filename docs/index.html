@@ -27,11 +27,26 @@
     const { ForceGraph3D } = ForceGraph3D || {};
     const { SpriteText } = THREE || {};
 
+    // Add a utility function to handle API endpoints with fallback
+    const getApiEndpoint = (path) => {
+        // Try the primary endpoint first, fallback to localhost if needed
+        return `https://bookmark-knowledge-graph.fly.dev${path}`
+            .catch(error => {
+                console.log("Falling back to localhost", error);
+                return `http://localhost:8080${path}`;
+            });
+    };
+
     class Search extends React.Component {
 
       constructor(props) {
           super(props);
-          this.state = { query: "", node: null, k: 20};
+          this.state = { 
+              query: "", 
+              node: null, 
+              k: 20,
+              apiBase: "https://bookmark-knowledge-graph.fly.dev"
+          };
           this.timer = null;
           this.handleChangeText = this.handleChangeText.bind(this);
           this.handleHoverNode = this.handleHoverNode.bind(this);
@@ -41,6 +56,10 @@
           this.highlight = this.highlight.bind(this);
           this.handleClickDate = this.handleClickDate.bind(this);
           this.chat = this.chat.bind(this);
+          this.checkApiEndpoint = this.checkApiEndpoint.bind(this);
+
+          // Check which API endpoint is available
+          this.checkApiEndpoint();
 
           // Get query and node from URL
           const params = new URLSearchParams(window.location.search);
@@ -54,7 +73,49 @@
                 this.search(query + " " + node, this.state.k);
             }
           }
+      }
 
+      // Check which API endpoint is available
+      checkApiEndpoint() {
+          // Try fly.io first with proper error handling
+          fetch("https://bookmark-knowledge-graph.fly.dev/", {
+              method: 'GET',
+              mode: 'cors', // Try with CORS mode
+              headers: {
+                  'Accept': 'application/json'
+              }
+          })
+          .then(response => {
+              if (response.ok) {
+                  this.setState({ apiBase: "https://bookmark-knowledge-graph.fly.dev" });
+                  console.log("Using fly.io API endpoint");
+                  return true;
+              }
+              throw new Error("Fly.io endpoint not available");
+          })
+          .catch(error => {
+              console.log("Falling back to localhost API endpoint", error);
+              // Try localhost as fallback
+              return fetch("http://localhost:8080/", {
+                  method: 'GET',
+                  headers: {
+                      'Accept': 'application/json'
+                  }
+              })
+              .then(response => {
+                  if (response.ok) {
+                      this.setState({ apiBase: "http://localhost:8080" });
+                      console.log("Using localhost API endpoint");
+                      return true;
+                  }
+                  throw new Error("Localhost endpoint not available");
+              })
+              .catch(err => {
+                  console.error("All API endpoints failed", err);
+                  this.setState({ apiBase: "http://localhost:8080" }); // Default to localhost anyway
+                  return false;
+              });
+          });
       }
 
       // Plot graph 600 ms after used ended typing.
@@ -74,7 +135,6 @@
 
       // Render texts from ChatGPT.
       chat() {
-
         // Get active query and node.
         let query = this.state.query;
         if (this.state.node !== null) {
@@ -91,7 +151,7 @@
         const response = document.getElementById("chat");
 
         if (query.length > 3){
-            fetch('https://knowledge-blue-glade-1168.fly.dev/chat/20/' + query.replace("/", ""))
+            fetch(`${this.state.apiBase}/chat/20/${query.replace("/", "")}`)
             .then(response => {
                 // Stream response.
                 const reader = response.body.getReader();
@@ -134,6 +194,7 @@
             })
             .catch(error => {
                 console.error(error);
+                document.getElementById('ask').innerHTML = "<div id='chat'>Error connecting to API. Make sure your server is running.</div>";
             });
         }
         this.search(query, this.state.k, false, false);
@@ -195,94 +256,138 @@
             chat.hidden = true;
         }
 
-        fetch("https://knowledge-blue-glade-1168.fly.dev/search/" + sort.toString() + "/"  + this.state.node + "/" + k.toString() + "/" + query.replace("/", "")).then(res => res.json()).then(data => {
-                ReactDOM.render(
-                    <div>
-                    {Object.entries(data["documents"]).map((document, _) =>
-                        <div id="document">
-                            <a class="title" href={document[1]["url"]} target="_blank">{this.highlight(document[1]["title"])}</a>
-                            <div id="date" onClick={() => this.handleClickDate()}>{this.highlight(document[1]["date"])}</div>
-                            <div id="summary">{this.highlight(document[1]["summary"])}</div>
-                            <div id="tags">
-                                {Object.entries(document[1]["tags"].concat(document[1]["extra-tags"])).map((tag, _) =>
-                                    <div id="tag" onClick={() => this.handleClickTag(tag[1])}>
-                                        {this.highlight(tag[1])}
-                                    </div>
-                                )}
-                            </div>
+        fetch(`${this.state.apiBase}/search/${sort.toString()}/${this.state.node}/${k.toString()}/${query.replace("/", "")}`)
+        .then(res => res.json())
+        .then(data => {
+            ReactDOM.render(
+                <div>
+                {Object.entries(data["documents"]).map((document, _) =>
+                    <div id="document">
+                        <a class="title" href={document[1]["url"]} target="_blank">{this.highlight(document[1]["title"])}</a>
+                        <div id="date" onClick={() => this.handleClickDate()}>{this.highlight(document[1]["date"])}</div>
+                        <div id="summary">{this.highlight(document[1]["summary"])}</div>
+                        <div id="tags">
+                            {Object.entries(document[1]["tags"].concat(document[1]["extra-tags"])).map((tag, _) =>
+                                <div id="tag" onClick={() => this.handleClickTag(tag[1])}>
+                                    {this.highlight(tag[1])}
+                                </div>
+                            )}
                         </div>
-                        )}
-                    </div>,
-                    document.getElementById('documents')
-                );
-            });
+                    </div>
+                    )}
+                </div>,
+                document.getElementById('documents')
+            );
+        })
+        .catch(error => {
+            console.error("Search error:", error);
+            document.getElementById('documents').innerHTML = "<div>Error connecting to API. Make sure your server is running.</div>";
+        });
+    }
+
+    plot(query, k) {
+        if (query.length < 1) {
+            return;
         }
+        
+        console.log(`Plotting with query: ${query}, k: ${k}, using API: ${this.state.apiBase}`);
+        
+        fetch(`${this.state.apiBase}/plot/${k}/${query.replace("/", "")}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API responded with status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            ReactDOM.render(
+                <ForceGraph3D
+                    graphData={data}
+                    backgroundColor="#131317"
+                    width={window.innerWidth / 2}
+                    height={window.innerHeight}
+                    showNavInfo={false}
+                    nodeAutoColorBy="group"
+                    linkOpacity={0.6}
+                    linkWidth={0.1}
+                    linkResolution={10}
+                    linkDirectionalParticleColor={() => "#FFFFFF"}
+                    linkDirectionalParticles={1}
+                    linkDirectionalParticleWidth={0.2}
+                    linkDirectionalParticleResolution={8}
+                    linkColor="#FFFFFF"
 
+                    linkThreeObjectExtend={true}
+                    linkThreeObject={link => {
+                        // extend link with text sprite
+                        const sprite = new SpriteText(`${link.relation}`);
+                        sprite.color = '#FFFFFF';
+                        sprite.textHeight = 2;
+                        sprite.fontSize = 0;
+                        sprite.fontFace = "Futura";
+                        return sprite;
+                    }}
+                    linkPositionUpdate={(sprite, { start, end }) => {
+                        const middlePos = Object.assign(...['x', 'y', 'z'].map(c => ({
+                            [c]: start[c] + (end[c] - start[c]) / 2 // calc middle point
+                        })));
+                        // Position sprite
+                        Object.assign(sprite.position, middlePos);
+                    }}
+                    nodeThreeObject={node => {
+                        const sprite = new SpriteText(node.id);
+                        sprite.color = node.color;
+                        sprite.textHeight = 4;
+                        sprite.fontSize = 50;
+                        sprite.fontFace = "Futura";
+                        return sprite;
+                    }}
+                    onNodeHover={node => { this.handleHoverNode(node) }}
+                />, document.getElementById('graph')
+            );
+        })
+        .catch(error => {
+            console.error("Plot error:", error);
+            
+            // Try the other endpoint if this one failed
+            const otherEndpoint = this.state.apiBase.includes("localhost") 
+                ? "https://bookmark-knowledge-graph.fly.dev" 
+                : "http://localhost:8080";
+                
+            console.log(`Trying alternative endpoint: ${otherEndpoint}`);
+            
+            // Update the API base for future requests
+            this.setState({ apiBase: otherEndpoint });
+            
+            // Show error message
+            document.getElementById('graph').innerHTML = 
+                `<div style='color: white; padding: 20px;'>
+                    Error connecting to API: ${error.message}<br>
+                    Trying alternative endpoint for next request...
+                </div>`;
+        });
+    }
 
-      plot(query, k) {
-          fetch("https://knowledge-blue-glade-1168.fly.dev/plot/" + k.toString() + "/" + query.replace("/", "")).then(res => res.json()).then(data => {
-              ReactDOM.render(
-                  <ForceGraph3D
-                      graphData={data}
-                      backgroundColor="#131317"
-                      width={window.innerWidth / 2}
-                      height={window.innerHeight}
-                      showNavInfo={false}
-                      nodeAutoColorBy="group"
-                      linkOpacity={0.6}
-                      linkWidth={0.1}
-                      linkResolution={10}
-                      linkDirectionalParticleColor={() => "#FFFFFF"}
-                      linkDirectionalParticles={1}
-                      linkDirectionalParticleWidth={0.2}
-                      linkDirectionalParticleResolution={8}
-                      linkColor="#FFFFFF"
+    render() {
+        return (
+            <React.Fragment>
+              <input id="search" type="textarea" placeholder="Neural Search" value={this.state.query} onChange={this.handleChangeText} autoFocus/>
+              <button class="ask" role="button" onClick={this.chat}>Ask</button>
+              <div style={{fontSize: '12px', color: '#666', marginTop: '5px'}}>
+                Using API: {this.state.apiBase}
+              </div>
+            </React.Fragment>
+        );
+    }
+}
 
-                      linkThreeObjectExtend={true}
-                      linkThreeObject={link => {
-                          // extend link with text sprite
-                          const sprite = new SpriteText(`${link.relation}`);
-                          sprite.color = '#FFFFFF';
-                          sprite.textHeight = 2;
-                          sprite.fontSize = 0;
-                          sprite.fontFace = "Futura";
-                          return sprite;
-                      }}
-                      linkPositionUpdate={(sprite, { start, end }) => {
-                          const middlePos = Object.assign(...['x', 'y', 'z'].map(c => ({
-                              [c]: start[c] + (end[c] - start[c]) / 2 // calc middle point
-                          })));
-                          // Position sprite
-                          Object.assign(sprite.position, middlePos);
-                      }}
-                      nodeThreeObject={node => {
-                          const sprite = new SpriteText(node.id);
-                          sprite.color = node.color;
-                          sprite.textHeight = 4;
-                          sprite.fontSize = 50;
-                          sprite.fontFace = "Futura";
-                          return sprite;
-
-                      }}
-                      onNodeHover={node => { this.handleHoverNode(node) }}
-                    />, document.getElementById('graph')
-              );
-          });
-      }
-
-      render() {
-          return (
-              <React.Fragment>
-                <input id="search" type="textarea" placeholder="Neural Search" value={this.state.query} onChange={this.handleChangeText} autoFocus/>
-                <button class="ask" role="button" onClick={this.chat}>Ask</button>
-              </React.Fragment>
-          );
-      }
-  }
-
-  // Use ReactDOM directly instead of createRoot for React 17
-  ReactDOM.render(<Search />, document.getElementById('backsearch'));
-
+// Use ReactDOM directly instead of createRoot for React 17
+ReactDOM.render(<Search />, document.getElementById('backsearch'));
 </script>
 <link rel="stylesheet" href="style.css">
 <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
