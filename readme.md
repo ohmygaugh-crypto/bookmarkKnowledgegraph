@@ -218,6 +218,62 @@ Then, we can run `make launch` at the root of the repository.
 make launch
 ```
 
+##### LM Studio provider and logs
+
+The **Ask** feature can use a model served locally by
+[LM Studio](https://lmstudio.ai/docs/developer/core/server). When the API runs
+inside Docker, configure `.env` with:
+
+```dotenv
+LLM_PROVIDER=lmstudio
+LMSTUDIO_BASE_URL=http://host.docker.internal:1234/v1
+LMSTUDIO_API_KEY=lm-studio
+LMSTUDIO_MODEL=google/gemma-4-e4b
+```
+
+Start the LM Studio API server, confirm the configured model is loaded, and
+then launch this application:
+
+```sh
+lms server start
+lms ps
+make launch
+```
+
+To inspect the exact formatted prompts, model output, and prediction
+statistics while using **Ask**, start this command before sending a query:
+
+```sh
+lms log stream --source model --filter input,output --stats
+```
+
+To inspect LM Studio HTTP server activity and errors:
+
+```sh
+lms log stream --source server
+```
+
+LM Studio also stores persistent server logs under:
+
+```text
+~/.lmstudio/server-logs/YYYY-MM/YYYY-MM-DD.N.log
+```
+
+On macOS, application diagnostics are stored in:
+
+```text
+~/Library/Logs/LM Studio/main.log
+```
+
+Application-side API activity and errors can be followed separately:
+
+```sh
+docker logs -f run_knowledge
+```
+
+> ⚠️ Model logs may contain the complete prompt, retrieved bookmark content,
+> and generated response. Treat them as potentially sensitive.
+
 We can also deploy the API manually using:
 
 ```
